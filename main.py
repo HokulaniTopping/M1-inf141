@@ -49,7 +49,7 @@ def build_index():
                 if url:
                     doc_id_map[doc_id] = url
                     for term, freq in term_freqs.items():
-                        index[term].append({'doc_id': doc_id, 'term_freq': freq})
+                        index[term].append({'doc_id': doc_id, 'term_freq': freq}) #posting
                     doc_id += 1
 
     return index, doc_id_map
@@ -79,7 +79,7 @@ def save_doc_map(doc_id_map, path="doc_ids.json"):
 
 
 
-        
+
 if __name__ == "__main__":
     print("Building inverted index...")
     index, doc_id_map = build_index()
