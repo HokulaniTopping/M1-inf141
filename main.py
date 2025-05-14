@@ -14,6 +14,7 @@ import warnings
 
 DATA_DIR = "ANALYST"
 OUTPUT_INDEX = "index.json"
+REPORT_INDEX  = "report.txt"
 
 def process_file(filepath, doc_id):
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -53,6 +54,20 @@ def build_index():
 
     return index, doc_id_map
 
+
+def save_report(path, doc_count, token_count, index_path):
+
+    size_kb = os.path.getsize(index_path) / 1024
+
+    with open(path, 'w') as f:
+        f.write("Milestone 1 Report\n")
+        f.write("===================\n")
+        f.write(f"Number of indexed documents: {doc_count}\n")
+        f.write(f"Number of unique tokens: {token_count}\n")
+        f.write(f"Size of index on disk: {size_kb} KB\n")
+
+
+
 def save_index(index, path):
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(index, f, indent=2)
@@ -61,11 +76,17 @@ def save_doc_map(doc_id_map, path="doc_ids.json"):
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(doc_id_map, f, indent=2)
 
+
+
+
+        
 if __name__ == "__main__":
     print("Building inverted index...")
     index, doc_id_map = build_index()
     save_index(index, OUTPUT_INDEX)
     save_doc_map(doc_id_map)
+    save_report(REPORT_INDEX, len(doc_id_map), len(index), OUTPUT_INDEX)
     print(f"Index saved to {OUTPUT_INDEX}")
     print(f"Total documents indexed: {len(doc_id_map)}")
     print(f"Total unique tokens: {len(index)}")
+    print(f"Report saved to {REPORT_INDEX}")
