@@ -52,20 +52,3 @@ def build_index():
                     doc_id += 1
 
     return index, doc_id_map
-
-def save_index(index, path):
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(index, f, indent=2)
-
-def save_doc_map(doc_id_map, path="doc_ids.json"):
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(doc_id_map, f, indent=2)
-
-if __name__ == "__main__":
-    print("Building inverted index...")
-    index, doc_id_map = build_index()
-    save_index(index, OUTPUT_INDEX)
-    save_doc_map(doc_id_map)
-    print(f"Index saved to {OUTPUT_INDEX}")
-    print(f"Total documents indexed: {len(doc_id_map)}")
-    print(f"Total unique tokens: {len(index)}")
