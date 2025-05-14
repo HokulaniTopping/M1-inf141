@@ -1,0 +1,12 @@
+# Auto-generated output files
+index.json
+doc_ids.json
+report.txt
+
+# Python cache folders
+__pycache__/
+
+# Optional: ignore all .json/.txt unless explicitly tracked
+*.json
+*.txt
+!*.py
