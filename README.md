@@ -2,7 +2,7 @@
 
 This project builds an inverted index from a collection of crawled UCI web pages.
 
-## 📁 Files
+## Files
 
 - `main.py`: Builds the inverted index
 - `utils.py`: Tokenization and stemming helpers
@@ -10,7 +10,7 @@ This project builds an inverted index from a collection of crawled UCI web pages
 - `doc_ids.json`: (Generated) Maps doc_id → URL
 - `report.txt`: (Generated) Contains index analytics
 
-## ✅ How to Run
+## How to Run
 
 1. Install dependencies:
 
@@ -26,7 +26,7 @@ python3 main.py
 - `report.txt`
 
 
-## ❌ Ignored Files
+## Ignored Files
 Files like `index.json`, `doc_ids.json`, and `__pycache__/` are ignored in `.gitignore`
 
 ---
