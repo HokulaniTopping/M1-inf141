@@ -1,6 +1,7 @@
 import json
 import os
 from utils import tokenize_and_stem
+import math
 
 # constants
 INDEX_PATH = "index.json"
@@ -11,7 +12,10 @@ class SearchEngine:
         """Initialize the search engine by loading the index and document ID map."""
         self.load_index(index_path)
         self.load_doc_ids(doc_ids_path)
-        
+        self.total_docs = len(self.doc_id_map)
+
+
+
     def load_index(self, path):
         """Load the inverted index from a JSON file."""
         with open(path, 'r', encoding='utf-8') as f:
@@ -41,13 +45,13 @@ class SearchEngine:
         
         # for AND queries, find documents that contain all query terms
         doc_scores = self._boolean_and_search(query_terms)
-        
+
         # convert the document scores to a list of (url, score) tuples
         results = [(self.doc_id_map.get(str(doc_id)), score) 
                   for doc_id, score in doc_scores]
         
         return results[:top_n]
-    
+
     def _boolean_and_search(self, query_terms):
         """
         Perform a boolean AND search using the query terms.
@@ -68,6 +72,7 @@ class SearchEngine:
         
         # for each remaining term, filter the candidate documents
         for term in query_terms[1:]:
+            print("THIS IS THE TOKENIZED AND STEMMED TERM "+term)
             if term not in self.index:
                 return []  # no documents contain this term
                 
@@ -79,17 +84,36 @@ class SearchEngine:
             common_docs = {}
             for doc_id in candidate_docs:
                 if doc_id in term_docs:
-                    # For scoring, we'll use the sum of term frequencies for now
-                    common_docs[doc_id] = candidate_docs[doc_id] + term_docs[doc_id]
+                    # USING TF IDF SCORING I HOPE I DID THIS RIGHT
+                    common_docs[doc_id] = candidate_docs[doc_id] + self.compute_tf_idf(term, doc_id)
             
             candidate_docs = common_docs
-            
+
         # convert the dictionary to a list of (doc_id, score) tuples and sort by score
         doc_scores = [(doc_id, score) for doc_id, score in candidate_docs.items()]
         doc_scores.sort(key=lambda x: x[1], reverse=True)
         
         return doc_scores
-    
+        
+    def compute_tf_idf(self, term, doc_id):
+        # Get term frequency in this doc
+        postings = self.index.get(term, [])
+        tf = 0
+        df = len(postings)
+        
+        for posting in postings:
+            if posting["doc_id"] == doc_id:
+                tf = posting["term_freq"]
+                break
+
+        if df == 0 or tf == 0:
+            return 0
+
+        # Calculate IDF
+        idf = math.log(self.total_docs / (1 + df))
+        
+        return tf * idf
+
     def create_report(self, queries, top_n=5, output_file="search_report.txt"):
         """Create a report of the top results for each query."""
         with open(output_file, 'w', encoding='utf-8') as f:
