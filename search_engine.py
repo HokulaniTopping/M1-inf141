@@ -92,11 +92,13 @@ class SearchEngine:
         # convert the dictionary to a list of (doc_id, score) tuples and sort by score
         doc_scores = [(doc_id, score) for doc_id, score in candidate_docs.items()]
         doc_scores.sort(key=lambda x: x[1], reverse=True)
+        #sorted by score
         
         return doc_scores
         
+
     def compute_tf_idf(self, term, doc_id):
-        # Get term frequency in this doc
+        # Get term frequecy in doc
         postings = self.index.get(term, [])
         tf = 0
         df = len(postings)
@@ -115,6 +117,7 @@ class SearchEngine:
         return tf * idf
 
     def create_report(self, queries, top_n=5, output_file="search_report.txt"):
+        print("ABOUT TO CREATE FILE")
         """Create a report of the top results for each query."""
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write("Search Engine Report - Milestone 2\n")
@@ -139,6 +142,8 @@ def cli():
     
     print("Search Engine CLI (type 'q' to quit)")
     print("====================================")
+
+    queries_run = []
     
     while True:
         query = input("\nEnter a search query: ")
@@ -146,6 +151,7 @@ def cli():
         if query.lower() == 'q':
             break
             
+        queries_run.append(query)
         results = search_engine.search(query)
         
         print("\nSearch Results:")
@@ -154,6 +160,15 @@ def cli():
         else:
             for i, (url, score) in enumerate(results, 1):
                 print(f"{i}. {url} (Score: {score})")
+
+
+    if queries_run:
+        search_engine.create_report(queries_run)
+        print("Search report saved as search_report.txt")
+
+
+
+
 
 # test with the specified queries
 def test_queries():
@@ -165,6 +180,7 @@ def test_queries():
         "master of software engineering"
     ]
     
+    print("Bout to create report")
     search_engine.create_report(queries)
     
     print("Report created: search_report.txt")
@@ -176,3 +192,4 @@ if __name__ == "__main__":
         test_queries()
     else:
         cli()
+

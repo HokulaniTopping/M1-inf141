@@ -87,16 +87,30 @@ HTML_TEMPLATE = '''
 </body>
 </html>
 '''
-
+queries_run = []
 @app.route('/')
 def index():
     query = request.args.get('query', '')
     results = []
     
     if query:
-        results = search_engine.search(query)
-    
+        if query.lower() == 'q':
+            if queries_run:
+                search_engine.create_report(queries_run)
+                queries_run.clear()  # reset for new session
+                return render_template_string('<h2>Report created as <code>search_report.txt</code></h2><a href="/">Back to search</a>')
+            else:
+                return render_template_string('<h2>No queries to report on.</h2><a href="/">Back to search</a>')
+        else:
+            queries_run.append(query)
+            results = search_engine.search(query)
+
     return render_template_string(HTML_TEMPLATE, query=query, results=results)
+
+
+    #     results = search_engine.search(query)
+    
+    # return render_template_string(HTML_TEMPLATE, query=query, results=results)
 
 if __name__ == '__main__':
     app.run(debug=True)
