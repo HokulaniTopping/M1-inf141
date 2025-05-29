@@ -11,7 +11,17 @@ def generate_report():
         "cristina lopes",
         "machine learning",
         "ACM",
-        "master of software engineering"
+        "master of software engineering", 
+        "the",
+        "student resources",
+        "upcoming events",
+        "what can i study",
+        "i need help",
+        "homepage", 
+        "random stuff",
+        "help please", 
+        "test test", 
+        "professor list"
     ]
     
     # create a report with the top 5 URLs for each query

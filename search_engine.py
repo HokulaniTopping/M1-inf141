@@ -2,6 +2,7 @@ import json
 import os
 from utils import tokenize_and_stem
 import math
+from collections import defaultdict
 
 # constants
 INDEX_PATH = "index.json"
@@ -20,7 +21,8 @@ class SearchEngine:
         """Load the inverted index from a JSON file."""
         with open(path, 'r', encoding='utf-8') as f:
             self.index = json.load(f)
-        
+
+
     def load_doc_ids(self, path):
         """Load the document ID to URL mapping from a JSON file."""
         with open(path, 'r', encoding='utf-8') as f:
@@ -44,7 +46,7 @@ class SearchEngine:
             return []
         
         # for AND queries, find documents that contain all query terms
-        doc_scores = self._boolean_and_search(query_terms)
+        doc_scores = self._tf_idf_search(query_terms)
 
         # convert the document scores to a list of (url, score) tuples
         results = [(self.doc_id_map.get(str(doc_id)), score) 
@@ -52,49 +54,69 @@ class SearchEngine:
         
         return results[:top_n]
 
-    def _boolean_and_search(self, query_terms):
-        """
-        Perform a boolean AND search using the query terms.
-        
-        Args:
-            query_terms (list): The tokenized and stemmed query terms.
-            
-        Returns:
-            list: A list of (doc_id, score) tuples for documents that match all query terms.
-        """
-        # find documents that contain the first query term
-        if not query_terms or query_terms[0] not in self.index:
-            return []
-            
-        # Get the documents that contain the first term
-        candidate_docs = {posting["doc_id"]: posting["term_freq"] 
-                         for posting in self.index[query_terms[0]]}
-        
-        # for each remaining term, filter the candidate documents
-        for term in query_terms[1:]:
-            print("THIS IS THE TOKENIZED AND STEMMED TERM "+term)
-            if term not in self.index:
-                return []  # no documents contain this term
-                
-            # get the documents that contain this term
-            term_docs = {posting["doc_id"]: posting["term_freq"] 
-                        for posting in self.index[term]}
-            
-            # keep only the documents that contain both the current term and all previous terms
-            common_docs = {}
-            for doc_id in candidate_docs:
-                if doc_id in term_docs:
-                    # USING TF IDF SCORING I HOPE I DID THIS RIGHT
-                    common_docs[doc_id] = candidate_docs[doc_id] + self.compute_tf_idf(term, doc_id)
-            
-            candidate_docs = common_docs
 
-        # convert the dictionary to a list of (doc_id, score) tuples and sort by score
-        doc_scores = [(doc_id, score) for doc_id, score in candidate_docs.items()]
-        doc_scores.sort(key=lambda x: x[1], reverse=True)
-        #sorted by score
+    # def _boolean_and_search(self, query_terms):
+    #     """
+    #     Perform a boolean AND search using the query terms.
         
-        return doc_scores
+    #     Args:
+    #         query_terms (list): The tokenized and stemmed query terms.
+            
+    #     Returns:
+    #         list: A list of (doc_id, score) tuples for documents that match all query terms.
+    #     """
+    #     # find documents that contain the first query term
+    #     if not query_terms or query_terms[0] not in self.index:
+    #         return []
+            
+    #     # Get the documents that contain the first term
+    #     candidate_docs = {posting["doc_id"]: posting["term_freq"] 
+    #                      for posting in self.index[query_terms[0]]}
+        
+    #     # for each remaining term, filter the candidate documents
+    #     for term in query_terms[1:]:
+    #         print("THIS IS THE TOKENIZED AND STEMMED TERM "+term)
+    #         if term not in self.index:
+    #             return []  # no documents contain this term
+                
+    #         # get the documents that contain this term
+    #         term_docs = {posting["doc_id"]: posting["term_freq"] 
+    #                     for posting in self.index[term]}
+            
+    #         # keep only the documents that contain both the current term and all previous terms
+    #         common_docs = {}
+    #         for doc_id in candidate_docs:
+    #             if doc_id in term_docs:
+    #                 # USING TF IDF SCORING I HOPE I DID THIS RIGHT
+    #                 common_docs[doc_id] = candidate_docs[doc_id] + self.compute_tf_idf(term, doc_id)
+            
+    #         candidate_docs = common_docs
+
+    #     # convert the dictionary to a list of (doc_id, score) tuples and sort by score
+    #     doc_scores = [(doc_id, score) for doc_id, score in candidate_docs.items()]
+    #     doc_scores.sort(key=lambda x: x[1], reverse=True)
+    #     #sorted by score
+        
+    #     return doc_scores
+
+    def _tf_idf_search(self, query_terms):
+        scores = defaultdict(float)
+        doc_freqs = {}
+        
+        # calculate IDF for each query term
+        for term in query_terms:
+            postings = self.index.get(term, [])
+            doc_freqs[term] = len(postings)
+
+        for term in query_terms:
+            postings = self.index.get(term, [])
+            idf = math.log(self.total_docs / (1 + doc_freqs[term]))
+            for posting in postings:
+                doc_id = posting["doc_id"]
+                tf = posting["term_freq"]
+                scores[doc_id] += tf * idf
+
+        return sorted(scores.items(), key=lambda x: x[1], reverse=True)
         
 
     def compute_tf_idf(self, term, doc_id):
