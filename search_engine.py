@@ -1,7 +1,6 @@
 import json
 import os
-from utils import tokenize_and_stem_for_indexing
-from utils import tokenize_and_stem_for_search
+from utils import tokenize_and_stem
 import math
 from collections import defaultdict
 
@@ -43,7 +42,7 @@ class SearchEngine:
             list: A list of (url, score) tuples for the top matching documents.
         """
         # tokenize and stem the query
-        query_terms = tokenize_and_stem_for_search(query)
+        query_terms = tokenize_and_stem(query)
         
         if not query_terms:
             return []
