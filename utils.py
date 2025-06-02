@@ -37,3 +37,4 @@ def tokenize_and_stem(text):
     tokens = re.findall(r'\b[a-zA-Z0-9]+\b', text.lower())
     cleaned = [re.sub(r'\W+', '', token.lower()) for token in tokens if token.isalnum()]
     return [stemmer.stem(token) for token in cleaned if token]
+

@@ -71,6 +71,7 @@ HTML_TEMPLATE = '''
     
     {% if query %}
         <h2>Results for "{{ query }}"</h2>
+        <p>Took {{ '%.4f'|format(elapsed) }} seconds</p>
         
         {% if results %}
             {% for url, score in results %}
@@ -92,6 +93,7 @@ queries_run = []
 def index():
     query = request.args.get('query', '')
     results = []
+    elapsed = 0
     
     if query:
         if query.lower() == 'q':
@@ -103,9 +105,9 @@ def index():
                 return render_template_string('<h2>No queries to report on.</h2><a href="/">Back to search</a>')
         else:
             queries_run.append(query)
-            results = search_engine.search(query)
+            results, elapsed = search_engine.search(query)
 
-    return render_template_string(HTML_TEMPLATE, query=query, results=results)
+    return render_template_string(HTML_TEMPLATE, query=query, results=results, elapsed=elapsed)
 
 
     #     results = search_engine.search(query)

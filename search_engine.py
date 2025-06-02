@@ -3,7 +3,7 @@ import os
 from utils import tokenize_and_stem
 import math
 from collections import defaultdict
-
+import time
 # constants
 INDEX_PATH = "index.json"
 DOC_IDS_PATH = "doc_ids.json"
@@ -30,9 +30,9 @@ class SearchEngine:
         with open(path, 'r', encoding='utf-8') as f:
             self.doc_id_map = json.load(f)
         
-    def search(self, query, top_n=5):
+    def search(self, query, top_n=100):
         """
-        Search for documents that match the query (boolean AND).
+        Search for documents that match the query.
         
         Args:
             query (str): The search query.
@@ -41,84 +41,80 @@ class SearchEngine:
         Returns:
             list: A list of (url, score) tuples for the top matching documents.
         """
+        start_time = time.time()
+
         # tokenize and stem the query
         query_terms = tokenize_and_stem(query)
         
         if not query_terms:
             return []
         
-        # for AND queries, find documents that contain all query terms
+        #find documents that contain all query terms
         doc_scores = self._tf_idf_search(query_terms)
 
         # convert the document scores to a list of (url, score) tuples
+        elapsed_time = time.time() - start_time
         results = [(self.doc_id_map.get(str(doc_id)), score) 
                   for doc_id, score in doc_scores]
         
-        return results[:top_n]
+        end_time = time.time() - start_time
+        print("ELAPSED TIME: ", end_time)
 
+        return results[:top_n], end_time
 
-    # def _boolean_and_search(self, query_terms):
-    #     """
-    #     Perform a boolean AND search using the query terms.
-        
-    #     Args:
-    #         query_terms (list): The tokenized and stemmed query terms.
-            
-    #     Returns:
-    #         list: A list of (doc_id, score) tuples for documents that match all query terms.
-    #     """
-    #     # find documents that contain the first query term
-    #     if not query_terms or query_terms[0] not in self.index:
-    #         return []
-            
-    #     # Get the documents that contain the first term
-    #     candidate_docs = {posting["doc_id"]: posting["term_freq"] 
-    #                      for posting in self.index[query_terms[0]]}
-        
-    #     # for each remaining term, filter the candidate documents
-    #     for term in query_terms[1:]:
-    #         print("THIS IS THE TOKENIZED AND STEMMED TERM "+term)
-    #         if term not in self.index:
-    #             return []  # no documents contain this term
-                
-    #         # get the documents that contain this term
-    #         term_docs = {posting["doc_id"]: posting["term_freq"] 
-    #                     for posting in self.index[term]}
-            
-    #         # keep only the documents that contain both the current term and all previous terms
-    #         common_docs = {}
-    #         for doc_id in candidate_docs:
-    #             if doc_id in term_docs:
-    #                 # USING TF IDF SCORING I HOPE I DID THIS RIGHT
-    #                 common_docs[doc_id] = candidate_docs[doc_id] + self.compute_tf_idf(term, doc_id)
-            
-    #         candidate_docs = common_docs
-
-    #     # convert the dictionary to a list of (doc_id, score) tuples and sort by score
-    #     doc_scores = [(doc_id, score) for doc_id, score in candidate_docs.items()]
-    #     doc_scores.sort(key=lambda x: x[1], reverse=True)
-    #     #sorted by score
-        
-    #     return doc_scores
 
     def _tf_idf_search(self, query_terms):
         scores = defaultdict(float)
         doc_freqs = {}
-        
-        # calculate IDF for each query term
+        doc_norms = defaultdict(float)
+        query_vector = defaultdict(float)
+        query_norm = 0
+
+        # IDF per term
         for term in query_terms:
             postings = self.index.get(term, [])
             doc_freqs[term] = len(postings)
+            idf = math.log(self.total_docs / (1 + len(postings)))
+            query_vector[term] = idf  # query is binary TF, so just use IDF
+            query_norm += idf ** 2
 
-        for term in query_terms:
-            postings = self.index.get(term, [])
-            idf = math.log(self.total_docs / (1 + doc_freqs[term]))
+            #cosine similarity (extra credit)
             for posting in postings:
                 doc_id = posting["doc_id"]
-                tf = posting["term_freq"]
-                scores[doc_id] += tf * idf
+                tf_idf = posting["term_freq"] * idf
+                scores[doc_id] += tf_idf * query_vector[term]
+                doc_norms[doc_id] += tf_idf ** 2
+
+        query_norm = math.sqrt(query_norm)
+
+        for doc_id in scores:
+            doc_norm = math.sqrt(doc_norms[doc_id])
+            if doc_norm != 0 and query_norm != 0:
+                scores[doc_id] /= (doc_norm * query_norm)
+            else:
+                scores[doc_id] = 0
 
         return sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+
+    # def _tf_idf_search(self, query_terms):
+    #     scores = defaultdict(float)
+    #     doc_freqs = {}
+        
+    #     # calculate IDF for each query term
+    #     for term in query_terms:
+    #         postings = self.index.get(term, [])
+    #         doc_freqs[term] = len(postings)
+
+    #     for term in query_terms:
+    #         postings = self.index.get(term, [])
+    #         idf = math.log(self.total_docs / (1 + doc_freqs[term]))
+    #         for posting in postings:
+    #             doc_id = posting["doc_id"]
+    #             tf = posting["term_freq"]
+    #             scores[doc_id] += tf * idf
+
+    #     return sorted(scores.items(), key=lambda x: x[1], reverse=True)
         
 
     def compute_tf_idf(self, term, doc_id):
@@ -176,7 +172,8 @@ def cli():
             break
             
         queries_run.append(query)
-        results = search_engine.search(query)
+        results, elapsed = search_engine.search(query)
+        print(f"\nSearch Results (took {elapsed:.4f} seconds):")
         
         print("\nSearch Results:")
         if not results:
@@ -206,6 +203,7 @@ def test_queries():
     
     print("Bout to create report")
     search_engine.create_report(queries)
+
     
     print("Report created: search_report.txt")
 
