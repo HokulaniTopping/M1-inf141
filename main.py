@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 from nltk.stem import PorterStemmer
 # from nltk.tokenize import word_tokenize
 from collections import defaultdict
-from utils import tokenize_and_stem
+from utils import tokenize_and_stem_for_indexing
+from utils import tokenize_and_stem_for_search
 import warnings
 
 
@@ -24,7 +25,7 @@ def process_file(filepath, doc_id):
             url = data.get('url', f'doc_{doc_id}')
             warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
             text = BeautifulSoup(html, 'html.parser').get_text()
-            tokens = tokenize_and_stem(text)
+            tokens = tokenize_and_stem_for_indexing(text)
 
             term_freqs = defaultdict(int)
             for token in tokens:

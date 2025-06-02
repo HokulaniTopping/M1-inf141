@@ -21,7 +21,10 @@ def generate_report():
         "random stuff",
         "help please", 
         "test test", 
-        "professor list"
+        "professor list", 
+        "school", 
+        "enrollment window", 
+        ""
     ]
     
     # create a report with the top 5 URLs for each query

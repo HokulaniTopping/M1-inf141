@@ -1,12 +1,15 @@
 import json
 import os
-from utils import tokenize_and_stem
+from utils import tokenize_and_stem_for_indexing
+from utils import tokenize_and_stem_for_search
 import math
 from collections import defaultdict
 
 # constants
 INDEX_PATH = "index.json"
 DOC_IDS_PATH = "doc_ids.json"
+
+
 
 class SearchEngine:
     def __init__(self, index_path=INDEX_PATH, doc_ids_path=DOC_IDS_PATH):
@@ -40,7 +43,7 @@ class SearchEngine:
             list: A list of (url, score) tuples for the top matching documents.
         """
         # tokenize and stem the query
-        query_terms = tokenize_and_stem(query)
+        query_terms = tokenize_and_stem_for_search(query)
         
         if not query_terms:
             return []
@@ -214,4 +217,5 @@ if __name__ == "__main__":
         test_queries()
     else:
         cli()
+
 
