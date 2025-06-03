@@ -136,7 +136,7 @@ class SearchEngine:
         
         return tf * idf
 
-    def create_report(self, queries, top_n=5, output_file="search_report.txt"):
+    def create_report(self, queries, top_n=10, output_file="search_report.txt"):
         print("ABOUT TO CREATE FILE")
         """Create a report of the top results for each query."""
         with open(output_file, 'w', encoding='utf-8') as f:
